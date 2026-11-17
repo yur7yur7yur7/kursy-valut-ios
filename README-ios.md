@@ -30,7 +30,10 @@
 1. Откройте **Actions** → **Build iOS (unsigned .ipa)** → **Run workflow**.
 2. Скачайте артефакт `RatesApp-unsigned-ipa` (файл `RatesApp-unsigned.ipa`).
 
-### Вариант 2 — Codemagic (если GitHub не выдаёт macOS-раннер)
+macOS-раннеры GitHub не всегда доступны сразу — если сборка висит в статусе
+«queued» дольше 10 минут, переходите к варианту 2.
+
+### Вариант 2 — Codemagic (надёжнее, если GitHub не выдаёт macOS-раннер)
 
 1. Зарегистрируйтесь на [codemagic.io](https://codemagic.io) и подключите
    репозиторий `kursy-valut-ios`.
@@ -82,8 +85,14 @@ project.yml            описание проекта для XcodeGen
 Sources/Shared/        общий код: модели, парсеры, сеть (и приложение, и виджет)
 Sources/App/           приложение: экраны, оформление, кеш, геолокация
 Sources/Widget/        виджет WidgetKit
-.github/workflows/     сборка unsigned .ipa
+.github/workflows/     сборка unsigned .ipa и проверка синтаксиса Swift
+codemagic.yaml         запасной вариант сборки в облаке
+tools/                 служебные проверки исходников
 ```
+
+Проверка синтаксиса Swift работает на обычном Linux-раннере
+(`swiftc -parse` по всем файлам) — это быстрый способ поймать опечатки
+до полной сборки на macOS.
 
 Данные приходят с тех же сайтов, что и в Android-версии: Яндекс, myfin.by
 (НБ РБ и ЦБ РФ) и kurs.onliner.by. Данные носят справочный характер:
