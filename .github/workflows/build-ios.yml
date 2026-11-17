@@ -35,20 +35,18 @@ jobs:
       - name: Сборка
         run: |
           set -o pipefail
+          # имя схемы берём из проекта: так сборка не сломается из-за переименования
+          SCHEME=$(xcodebuild -project RatesApp.xcodeproj -list \
+                   | sed -n '/Schemes:/,$p' \
+                   | sed -n 's/^ *\([A-Za-z0-9_.-]*\)$/\1/p' | head -1)
+          SCHEME=${SCHEME:-RatesApp}
+          echo "Схема сборки: $SCHEME"
           xcodebuild \
             -project RatesApp.xcodeproj \
-            -scheme RatesApp \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            build | xcpretty || xcodebuild \
-            -project RatesApp.xcodeproj \
-            -scheme RatesApp \
-            -configuration Release \
-            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \

@@ -1,32 +1,43 @@
-# Запасной вариант сборки, если GitHub Actions не может выдать macOS-раннер.
+# Сборка iOS-версии в облаке Codemagic (бесплатные macOS-минуты для публичных
+# репозиториев). Нужен только аккаунт на codemagic.io и подключённый репозиторий.
 #
-# Codemagic даёт бесплатные macOS-минуты для публичных репозиториев.
-# 1) Зарегистрироваться на codemagic.io и подключить репозиторий.
-# 2) В настройках проекта Codemagic включить сборку при push в main
-#    (или запустить вручную).
-# 3) Готовый RatesApp-unsigned.ipa скачать из раздела Artifacts.
+# Что происходит:
+#   1) XcodeGen собирает проект из project.yml;
+#   2) xcodebuild делает релизную сборку для устройства без подписи;
+#   3) .ipa собирается вручную: Payload/RatesApp.app (внутри — виджет в PlugIns).
 #
-# Дальше — как обычно: Sideloadly на Windows ставит .ipa на iPhone.
+# Готовый RatesApp-unsigned.ipa ставится на iPhone через Sideloadly.
 
 workflows:
   ios-build:
     name: Build unsigned .ipa
     instance_type: mac_mini_m2
     macos:
+      # если этой версии нет в пуле — удалите строку xcode:, возьмётся версия по умолчанию
       xcode: "16.2"
     scripts:
       - name: Сгенерировать проект Xcode
         script: |
+          set -e
           brew install xcodegen
           xcodegen generate --spec project.yml
+          echo "--- схемы ---"
+          xcodebuild -project RatesApp.xcodeproj -list | head -40
       - name: Собрать
         script: |
           set -o pipefail
+          # имя схемы берём из проекта: так сборка не сломается из-за переименования
+          SCHEME=$(xcodebuild -project RatesApp.xcodeproj -list \
+                   | sed -n '/Schemes:/,$p' \
+                   | sed -n 's/^ *\([A-Za-z0-9_.-]*\)$/\1/p' | head -1)
+          SCHEME=${SCHEME:-RatesApp}
+          echo "Схема сборки: $SCHEME"
           xcodebuild \
             -project RatesApp.xcodeproj \
-            -scheme RatesApp \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -36,11 +47,20 @@ workflows:
         script: |
           set -e
           APP="build/Build/Products/Release-iphoneos/RatesApp.app"
-          test -d "$APP"
+          if [ ! -d "$APP" ]; then
+            echo "приложение не собрано: $APP не найден"
+            exit 1
+          fi
           mkdir -p Payload
           cp -R "$APP" Payload/
+          if [ -d "Payload/RatesApp.app/PlugIns/RatesWidget.appex" ]; then
+            echo "виджет встроен: ок"
+          else
+            echo "видима: предупреждение — виджет не найден в PlugIns"
+          fi
           zip -qry RatesApp-unsigned.ipa Payload
           mkdir -p "$HOME/Output"
           cp RatesApp-unsigned.ipa "$HOME/Output/"
+          ls -la "$HOME/Output"
     artifacts:
       - path: RatesApp-unsigned.ipa

@@ -35,10 +35,20 @@ macOS-раннеры GitHub не всегда доступны сразу — е
 
 ### Вариант 2 — Codemagic (надёжнее, если GitHub не выдаёт macOS-раннер)
 
-1. Зарегистрируйтесь на [codemagic.io](https://codemagic.io) и подключите
-   репозиторий `kursy-valut-ios`.
-2. Запустите сборку — конфиг `codemagic.yaml` уже в репозитории.
-3. Заберите `RatesApp-unsigned.ipa` из раздела **Artifacts**.
+1. Зарегистрируйтесь на [codemagic.io](https://codemagic.io) (email + пароль).
+2. В Codemagic нажмите **Add new application** → **GitHub** → выберите репозиторий
+   `kursy-valut-ios` (потребуется авторизовать Codemagic в GitHub).
+3. Откройте приложение → вкладка **Build settings** → **Add app**:
+   - Platform: **iOS**;
+   - Bundle id: `ru.yur7.ratesapp`;
+   - нажмите **Start build** (или вкладка **Build** → **Start new build**).
+4. Сборка занимает ~5–10 минут. Когда она станет зелёной, откройте вкладку
+   **Artifacts** и скачайте `RatesApp-unsigned.ipa`.
+5. Ставите `.ipa` через Sideloadly (шаги ниже).
+
+Конфиг `codemagic.yaml` уже в репозитории — свои настройки в Codemagic вводить
+не нужно, только Bundle id для логов. Если сборка ругнётся на версию Xcode
+(`16.2`), удалите в `codemagic.yaml` строку `xcode:` — возьмётся версия по умолчанию.
 
 ### Установка на iPhone
 

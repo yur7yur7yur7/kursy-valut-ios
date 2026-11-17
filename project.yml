@@ -57,3 +57,20 @@ targets:
         SKIP_INSTALL: "YES"
         APPLICATION_EXTENSION_API_ONLY: "YES"
         TARGETED_DEVICE_FAMILY: "1,2"
+
+# Схема создаётся явно: иначе имя схемы зависит от версии XcodeGen
+schemes:
+  RatesApp:
+    build:
+      targets:
+        RatesApp: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
