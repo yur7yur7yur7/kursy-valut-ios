@@ -1,0 +1,77 @@
+name: Build iOS (unsigned .ipa)
+
+# Собирает приложение и виджет без подписи и упаковывает в .ipa.
+# Готовый файл ставится на iPhone через Sideloadly (нужен только Apple ID).
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "ios-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Исходники
+        uses: actions/checkout@v4
+
+      - name: XcodeGen
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Сборка
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project RatesApp.xcodeproj \
+            -scheme RatesApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcpretty || xcodebuild \
+            -project RatesApp.xcodeproj \
+            -scheme RatesApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Упаковка в .ipa
+        run: |
+          set -e
+          APP="build/Build/Products/Release-iphoneos/RatesApp.app"
+          test -d "$APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          # виджет должен лежать внутри приложения
+          test -d "Payload/RatesApp.app/PlugIns/RatesWidget.appex" || echo "виджет не встроен"
+          zip -qry RatesApp-unsigned.ipa Payload
+          ls -la RatesApp-unsigned.ipa
+
+      - name: Артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: RatesApp-unsigned-ipa
+          path: RatesApp-unsigned.ipa
+
+      - name: Релиз
+        if: startsWith(github.ref, 'refs/tags/ios-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" RatesApp-unsigned.ipa \
+            --title "Курсы валют для iPhone ${GITHUB_REF_NAME#ios-v}" \
+            --notes "Неподписанная сборка для Sideloadly: скачайте .ipa и поставьте через Sideloadly на iPhone. Подпись Apple ID живёт 7 дней, потом нужно переподписать." || true

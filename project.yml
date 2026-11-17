@@ -1,0 +1,59 @@
+name: RatesApp
+options:
+  bundleIdPrefix: ru.yur7
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: ""
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+    ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+    SWIFT_EMIT_LOC_STRINGS: "NO"
+
+targets:
+  RatesApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources/App
+        excludes:
+          - "Info.plist"
+      - path: Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ru.yur7.ratesapp
+        PRODUCT_NAME: RatesApp
+        INFOPLIST_FILE: Sources/App/Info.plist
+        GENERATE_INFOPLIST_FILE: "NO"
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - target: RatesWidget
+        embed: true
+
+  RatesWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources/Widget
+        excludes:
+          - "Info.plist"
+      - path: Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ru.yur7.ratesapp.RatesWidget
+        PRODUCT_NAME: RatesWidget
+        INFOPLIST_FILE: Sources/Widget/Info.plist
+        GENERATE_INFOPLIST_FILE: "NO"
+        SKIP_INSTALL: "YES"
+        APPLICATION_EXTENSION_API_ONLY: "YES"
+        TARGETED_DEVICE_FAMILY: "1,2"
