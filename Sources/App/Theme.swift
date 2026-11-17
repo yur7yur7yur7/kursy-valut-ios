@@ -33,13 +33,21 @@ enum Byn {
     static let sign = "\u{E901}"
 
     /// Текст, где знак рубля нарисован шрифтом НБ РБ, а остальное — системным.
+    ///
+    /// Знак собираем отдельным куском текста: так шрифт точно применится к глифу
+    /// (приватный символ U+E901 в системном шрифте выглядел бы «тофу»).
     static func text(_ value: String, size: CGFloat, weight: Font.Weight = .regular) -> Text {
-        var attributed = AttributedString(value)
-        if let range = attributed.range(of: sign) {
-            attributed[range].font = .custom("nbrb", size: size)
+        let parts = value.components(separatedBy: sign)
+        var result = Text("")
+        for (index, part) in parts.enumerated() {
+            if index > 0 {
+                result = result + Text(sign).font(.custom("nbrb", size: size))
+            }
+            if !part.isEmpty {
+                result = result + Text(part).font(.system(size: size, weight: weight))
+            }
         }
-        return Text(attributed)
-            .font(.system(size: size, weight: weight))
+        return result
     }
 }
 
