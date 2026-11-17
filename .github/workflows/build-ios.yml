@@ -16,7 +16,8 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-13
+    # несколько меток — GitHub возьмёт любой доступный образ macOS
+    runs-on: [macos-latest, macos-15, macos-13]
     steps:
       - name: Исходники
         uses: actions/checkout@v4

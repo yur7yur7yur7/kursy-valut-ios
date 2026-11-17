@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Выбор банка и отделения — два листа со списками.
 struct BankPickerSheet: View {
