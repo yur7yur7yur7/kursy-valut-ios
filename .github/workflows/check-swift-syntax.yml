@@ -22,8 +22,11 @@ jobs:
       - name: Разбор синтаксиса
         run: |
           set -e
+          files=$(find Sources -name '*.swift' | sort)
+          count=$(echo "$files" | grep -c . )
+          echo "Проверяем файлов: $count"
           fail=0
-          for f in $(find Sources -name '*.swift' | sort); do
+          for f in $files; do
             if ! swiftc -parse "$f"; then
               echo "::error file=$f::ошибка разбора"
               fail=1
@@ -32,4 +35,4 @@ jobs:
           if [ "$fail" != "0" ]; then
             exit 1
           fi
-          echo "Синтаксис в порядке"
+          echo "Синтаксис в порядке: $count файлов"
