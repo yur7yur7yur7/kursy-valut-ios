@@ -23,20 +23,30 @@
 
 ## Сборка без Mac
 
-Сборка идёт в GitHub Actions (раннер macOS), вам нужен только компьютер
-с Windows и Apple ID:
+Сборка идёт в облаке, вам нужен только компьютер с Windows и Apple ID.
+
+### Вариант 1 — GitHub Actions
 
 1. Откройте **Actions** → **Build iOS (unsigned .ipa)** → **Run workflow**.
 2. Скачайте артефакт `RatesApp-unsigned-ipa` (файл `RatesApp-unsigned.ipa`).
-3. Установите [Sideloadly](https://sideloadly.io) на компьютере.
-4. В Sideloadly: подключите iPhone по USB ( trust этому компьютеру — нажмите
-   «Доверять» на телефоне) либо введите Apple ID и включите «Sideload via
-   WiFi»;
+
+### Вариант 2 — Codemagic (если GitHub не выдаёт macOS-раннер)
+
+1. Зарегистрируйтесь на [codemagic.io](https://codemagic.io) и подключите
+   репозиторий `kursy-valut-ios`.
+2. Запустите сборку — конфиг `codemagic.yaml` уже в репозитории.
+3. Заберите `RatesApp-unsigned.ipa` из раздела **Artifacts**.
+
+### Установка на iPhone
+
+1. Установите [Sideloadly](https://sideloadly.io) на компьютере.
+2. В Sideloadly: подключите iPhone по USB (на телефоне нажмите «Доверять» этому
+   компьютеру) либо введите Apple ID и включите «Sideload via WiFi»;
    - поле **iTunes Path** — укажите `iTunes.exe` из установленного iTunes
      (нужно только для USB-варианта);
    - поле **IPA File** — выберите скачанный `.ipa`;
    - введите Apple ID и пароль, нажмите **Start**.
-5. На iPhone: «Настройки» → «Основные» → «Объект VPN и управление устройством»
+3. На iPhone: «Настройки» → «Основные» → «Объект VPN и управление устройством»
    → доверьте разработчика (если iOS попросит) → приложение появится на
    рабочем столе.
 

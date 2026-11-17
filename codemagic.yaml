@@ -1,0 +1,46 @@
+# Запасной вариант сборки, если GitHub Actions не может выдать macOS-раннер.
+#
+# Codemagic даёт бесплатные macOS-минуты для публичных репозиториев.
+# 1) Зарегистрироваться на codemagic.io и подключить репозиторий.
+# 2) В настройках проекта Codemagic включить сборку при push в main
+#    (или запустить вручную).
+# 3) Готовый RatesApp-unsigned.ipa скачать из раздела Artifacts.
+#
+# Дальше — как обычно: Sideloadly на Windows ставит .ipa на iPhone.
+
+workflows:
+  ios-build:
+    name: Build unsigned .ipa
+    instance_type: mac_mini_m2
+    macos:
+      xcode: "16.2"
+    scripts:
+      - name: Сгенерировать проект Xcode
+        script: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+      - name: Собрать
+        script: |
+          set -o pipefail
+          xcodebuild \
+            -project RatesApp.xcodeproj \
+            -scheme RatesApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Упаковать в .ipa
+        script: |
+          set -e
+          APP="build/Build/Products/Release-iphoneos/RatesApp.app"
+          test -d "$APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry RatesApp-unsigned.ipa Payload
+          mkdir -p "$HOME/Output"
+          cp RatesApp-unsigned.ipa "$HOME/Output/"
+    artifacts:
+      - path: RatesApp-unsigned.ipa
