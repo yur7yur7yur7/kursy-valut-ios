@@ -14,13 +14,18 @@ on:
 permissions:
   contents: write
 
+# новый пуш отменяет предыдущий прогон: в очереди не копятся дубли
+concurrency:
+  group: ios-build
+  cancel-in-progress: true
+
 jobs:
   build:
     # несколько меток — GitHub возьмёт любой доступный образ macOS
     runs-on: [macos-latest, macos-15, macos-13]
     steps:
       - name: Исходники
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: XcodeGen
         run: |
