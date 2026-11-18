@@ -7,14 +7,15 @@
 #   3) .ipa собирается вручную: Payload/RatesApp.app (внутри — виджет в PlugIns).
 #
 # Готовый RatesApp-unsigned.ipa ставится на iPhone через Sideloadly.
+#
+# ВАЖНО: блок macos: ниже можно удалять целиком — тогда Codemagic возьмёт
+# версию Xcode по умолчанию. Но комментировать строки внутри него нельзя:
+# останется пустой объект, и проверка схемы его отвергнет.
 
 workflows:
   ios-build:
     name: Build unsigned .ipa
     instance_type: mac_mini_m2
-    macos:
-      # если этой версии нет в пуле — удалите строку xcode:, возьмётся версия по умолчанию
-      xcode: "16.2"
     scripts:
       - name: Сгенерировать проект Xcode
         script: |
@@ -56,7 +57,7 @@ workflows:
           if [ -d "Payload/RatesApp.app/PlugIns/RatesWidget.appex" ]; then
             echo "виджет встроен: ок"
           else
-            echo "видима: предупреждение — виджет не найден в PlugIns"
+            echo "внимание: виджет не найден в PlugIns"
           fi
           zip -qry RatesApp-unsigned.ipa Payload
           mkdir -p "$HOME/Output"
@@ -64,3 +65,4 @@ workflows:
           ls -la "$HOME/Output"
     artifacts:
       - path: RatesApp-unsigned.ipa
+        name: RatesApp-unsigned.ipa
