@@ -63,6 +63,7 @@ workflows:
           mkdir -p "$HOME/Output"
           cp RatesApp-unsigned.ipa "$HOME/Output/"
           ls -la "$HOME/Output"
+    # В Codemagic artifacts — это список путей (строк), а не объектов с path/name.
+    # Путь считается от корня клона: ipa собирается именно туда.
     artifacts:
-      - path: RatesApp-unsigned.ipa
-        name: RatesApp-unsigned.ipa
+      - RatesApp-unsigned.ipa
