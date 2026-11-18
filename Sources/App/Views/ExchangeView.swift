@@ -56,7 +56,8 @@ struct ExchangeView: View {
                         .foregroundColor(Theme.accentLight)
                     Spacer()
                     Button(action: {
-                        share = SharePayload(text: ShareText.cityBest(best.usdSell, bestList.count))
+                        share = SharePayload(text: ShareText.cityBest(best.usdSell,
+                                                                       count: bestList.count))
                     }) {
                         Text("Поделиться")
                             .font(.system(size: 12))

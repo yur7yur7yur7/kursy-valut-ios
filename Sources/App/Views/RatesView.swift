@@ -45,7 +45,11 @@ struct ConverterBlock: View {
                 .foregroundColor(Theme.text)
                 .frame(width: 42, alignment: .leading)
             TextField("—", text: Binding(
-                get: { state.amountCode == code ? state.amountInput : (state.converted(code: code, provider: provider) ?? "") },
+                get: {
+                    if state.amountCode == code { return state.amountInput }
+                    return state.converted(code: code, provider: provider)
+                        .map { Fmt.exact($0, 2) } ?? ""
+                },
                 set: { state.setAmount(code: code, text: $0) }))
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)

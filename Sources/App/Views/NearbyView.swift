@@ -83,7 +83,7 @@ struct NearbyView: View {
                     Button(action: {
                         if let first = entries.first(where: { Nearby.isBest($0, best) }) {
                             share = SharePayload(text: ShareText.nearby(first, best,
-                                                                    state.locationPrecise))
+                                                                    precise: state.locationPrecise))
                         }
                     }) {
                         Text("Поделиться")
