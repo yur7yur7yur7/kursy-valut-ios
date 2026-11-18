@@ -1,0 +1,15 @@
+# Артефакты сборки Xcode
+build/
+DerivedData/
+Payload/
+*.ipa
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# Секреты — в репозиторий им нельзя
+api_key.txt
+*.token
+.env
+.env.*
+secrets/
