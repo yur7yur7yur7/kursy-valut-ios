@@ -17,6 +17,7 @@ struct RatesApp: App {
 /// Корневой экран: шапка со статусом, вкладки и содержимое.
 struct RootView: View {
     @EnvironmentObject private var state: AppState
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ScrollView {
@@ -95,6 +96,18 @@ struct RootView: View {
         .background(Theme.background.ignoresSafeArea())
         .onAppear {
             state.refresh()
+        }
+        .onChange(of: scenePhase) { phase in
+            // пользователь вернулся из настроек — проверяем местоположение
+            if phase == .active {
+                state.locationSettingsReturned()
+            }
+        }
+        .alert("Местоположение выключено", isPresented: $state.showLocationPrompt) {
+            Button("Включить") { state.enableLocation() }
+            Button("Не сейчас", role: .cancel) { state.skipLocation() }
+        } message: {
+            Text("На устройстве отключено определение местоположения. Пока оно выключено, ближайшие обменники не ищутся. Включите его в настройках — поиск запустится сам.")
         }
     }
 

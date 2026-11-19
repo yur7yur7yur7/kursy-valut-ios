@@ -41,8 +41,20 @@ final class LocationHelper: NSObject, ObservableObject, CLLocationManagerDelegat
         manager.authorizationStatus == .authorizedAlways
     }
 
+    /// Включены ли сервисы местоположения на устройстве (системный переключатель).
+    ///
+    /// Аналог «местоположение выключено» на Android: даже с разрешением фикс
+    /// не придёт, пока в iOS выключены Службы местоположения.
+    var servicesEnabled: Bool {
+        CLLocationManager.locationServicesEnabled()
+    }
+
     /// Запрашивает разрешение (если ещё не выдано) и определяет местоположение.
     func request(_ completion: @escaping (Result<Fix, Error>) -> Void) {
+        guard servicesEnabled else {
+            completion(.failure(LocationError.servicesDisabled))
+            return
+        }
         self.completion = completion
         switch manager.authorizationStatus {
         case .notDetermined:
@@ -119,5 +131,7 @@ final class LocationHelper: NSObject, ObservableObject, CLLocationManagerDelegat
     enum LocationError: Error {
         case denied
         case timeout
+        /// Службы местоположения выключены на устройстве.
+        case servicesDisabled
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 /// Состояние приложения: курсы, снимок банков, закреплённые отделения, местоположение.
 @MainActor
@@ -27,6 +28,16 @@ final class AppState: ObservableObject {
     @Published var locationLon = 0.0
     @Published var nearbyStatus = ""
 
+    /// Местоположение выключено на устройстве (системный переключатель).
+    @Published var locationOff = false
+    /// Показать модалку с предложением включить местоположение.
+    @Published var showLocationPrompt = false
+    /// Пользователь уже отказался включать местоположение в этой сессии.
+    @Published var locationDeclined = false
+
+    /// Пользователь открыл настройки: ждём возврата.
+    private var awaitingLocationSettings = false
+
     /// Сумма в долларах для вкладки «Рядом» (одна на весь список).
     @Published var amountText = ""
 
@@ -46,6 +57,7 @@ final class AppState: ObservableObject {
         }
         snapshot = SnapshotStore.loadSnapshot()
         pinned = SnapshotStore.loadPinned()
+        locationOff = SnapshotStore.loadLocationOff()
         if let saved = SnapshotStore.loadLocation() {
             hasLocation = true
             locationPrecise = saved.precise
@@ -120,6 +132,11 @@ final class AppState: ObservableObject {
 
     /// Определяет местоположение и строит список ближайших обменников.
     func locate() {
+        guard location.servicesEnabled else {
+            // местоположение выключено на устройстве: поиск не запускаем
+            markLocationOff()
+            return
+        }
         nearbyStatus = "Определяю местоположение…"
         location.request { [weak self] result in
             guard let self else { return }
@@ -129,6 +146,8 @@ final class AppState: ObservableObject {
                 self.locationPrecise = fix.precise
                 self.locationLat = fix.lat
                 self.locationLon = fix.lon
+                self.locationOff = false
+                SnapshotStore.saveLocationOff(false)
                 SnapshotStore.saveLocation(lat: fix.lat, lon: fix.lon, precise: fix.precise)
                 self.nearbyStatus = ""
             case .failure(let error):
@@ -136,10 +155,52 @@ final class AppState: ObservableObject {
                 switch error {
                 case LocationHelper.LocationError.denied:
                     self.nearbyStatus = "Нет доступа к местоположению. Разрешите его в настройках и попробуйте снова."
+                case LocationHelper.LocationError.servicesDisabled:
+                    self.markLocationOff()
                 default:
                     self.nearbyStatus = "Не удалось определить местоположение — попробуйте ещё раз."
                 }
             }
+        }
+    }
+
+    /// Местоположение выключено на устройстве: помечаем это и предлагаем включить.
+    private func markLocationOff() {
+        locationOff = true
+        SnapshotStore.saveLocationOff(true)
+        nearbyStatus = "Местоположение выключено на устройстве — поиск не запущен."
+        if !locationDeclined {
+            showLocationPrompt = true
+        }
+    }
+
+    /// Открывает настройки, где включают местоположение.
+    func enableLocation() {
+        showLocationPrompt = false
+        locationDeclined = false
+        awaitingLocationSettings = true
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    /// Пользователь отказался: процессы поиска не запускаем.
+    func skipLocation() {
+        locationDeclined = true
+        showLocationPrompt = false
+        markLocationOff()
+    }
+
+    /// Пользователь вернулся из настроек: проверяем, включил ли он местоположение.
+    func locationSettingsReturned() {
+        guard awaitingLocationSettings else { return }
+        awaitingLocationSettings = false
+        if location.servicesEnabled {
+            locationOff = false
+            SnapshotStore.saveLocationOff(false)
+            locate()
+        } else {
+            locationDeclined = true
+            markLocationOff()
         }
     }
 

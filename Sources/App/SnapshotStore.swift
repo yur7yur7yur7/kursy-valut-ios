@@ -81,4 +81,17 @@ enum SnapshotStore {
         guard let stored = read(StoredLocation.self, "location.json") else { return nil }
         return (stored.lat, stored.lon, stored.precise)
     }
+
+    /// Пометка: местоположение на устройстве выключено.
+    private struct StoredFlag: Codable {
+        var value: Bool
+    }
+
+    static func saveLocationOff(_ off: Bool) {
+        write(StoredFlag(value: off), "location_off.json")
+    }
+
+    static func loadLocationOff() -> Bool {
+        read(StoredFlag.self, "location_off.json")?.value ?? false
+    }
 }

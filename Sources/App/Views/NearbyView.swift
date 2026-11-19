@@ -3,7 +3,7 @@ import SwiftUI
 /// Вкладка «Рядом»: ближайшие обменники и лучший курс среди них.
 struct NearbyView: View {
     @ObservedObject var state: AppState
-    @State private var onlyExchangePoints = false
+    @State private var sortByRate = false
     @State private var share: SharePayload?
     @Environment(\.openURL) private var openURL
 
@@ -25,6 +25,11 @@ struct NearbyView: View {
                 Text(state.nearbyStatus)
                     .font(.system(size: 13))
                     .foregroundColor(Theme.subtitle)
+                    .padding(.top, 12)
+            }
+
+            if state.locationOff {
+                locationOffNotice
                     .padding(.top, 12)
             }
 
@@ -52,19 +57,42 @@ struct NearbyView: View {
 
     /* ------------------------------------------------------------- данные */
 
-    /// Отделения в радиусе (с учётом фильтра).
+    /// Отделения в радиусе (с учётом сортировки).
     private var entries: [Nearby.Entry] {
         guard state.hasLocation else { return [] }
         let all = Nearby.around(state.snapshot, state.locationLat, state.locationLon,
                                 Nearby.defaultRadiusM)
-        if onlyExchangePoints {
-            return all.filter { Nearby.isExchangePoint($0.office) }
-        }
-        return all
+        return Nearby.sorted(all, byRate: sortByRate)
     }
 
     private var bestRate: Double {
         Nearby.bestRate(entries)
+    }
+
+    /* ------------------------------------------------------- выключенная геолокация */
+
+    /// Плашка: местоположение на устройстве выключено — поиск не запускаем.
+    private var locationOffNotice: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("На устройстве отключено определение местоположения. Пока оно выключено, ближайшие обменники не ищутся. Включите его в настройках — поиск запустится сам.")
+                .font(.system(size: 13))
+                .foregroundColor(Theme.text)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(action: { state.enableLocation() }) {
+                Text("Включить местоположение")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Theme.accentLight)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Theme.accentSoft))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Theme.accentLine, lineWidth: 1))
     }
 
     /* -------------------------------------------------------------- герой */
@@ -117,8 +145,13 @@ struct NearbyView: View {
 
     private var toolbar: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ChipButton(title: "Только обменные пункты", active: onlyExchangePoints) {
-                onlyExchangePoints.toggle()
+            HStack(spacing: 8) {
+                ChipButton(title: "По дальности", active: !sortByRate) {
+                    sortByRate = false
+                }
+                ChipButton(title: "По курсу", active: sortByRate) {
+                    sortByRate = true
+                }
             }
 
             HStack(spacing: 10) {

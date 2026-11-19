@@ -51,6 +51,19 @@ enum Nearby {
         return list
     }
 
+    /// Сортирует отделения: по дальности (как вернул `around`) или по курсу —
+    /// от большего к меньшему.
+    ///
+    /// При равных курсах — ближние сверху, потом по адресу: порядок детерминированный.
+    static func sorted(_ entries: [Entry], byRate: Bool) -> [Entry] {
+        guard byRate else { return entries }
+        return entries.sorted { a, b in
+            if a.rate != b.rate { return a.rate > b.rate }
+            if abs(a.meters - b.meters) > 0.001 { return a.meters < b.meters }
+            return a.office.address < b.office.address
+        }
+    }
+
     /// Максимальный курс покупки доллара среди отделений (0 — данных нет).
     static func bestRate(_ entries: [Entry]) -> Double {
         entries.map { $0.rate }.max() ?? 0
@@ -59,12 +72,6 @@ enum Nearby {
     /// Отделение с лучшим курсом среди найденных (совпадения курсов отмечаются все).
     static func isBest(_ entry: Entry, _ bestRate: Double) -> Bool {
         bestRate > 0 && entry.rate > 0 && entry.rate >= bestRate - BankData.eps
-    }
-
-    /// Только обменные пункты (а не отделения банков).
-    static func isExchangePoint(_ office: BankData.Office) -> Bool {
-        let t = office.type.lowercased()
-        return t.contains("обмен") || t.contains("пункт обмена")
     }
 
     /// Расстояние для показа: «350 м», «1,2 км».
