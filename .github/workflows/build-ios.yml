@@ -2,6 +2,11 @@ name: Build iOS (unsigned .ipa)
 
 # Собирает приложение и виджет без подписи и упаковывает в .ipa.
 # Готовый файл ставится на iPhone через Sideloadly (нужен только Apple ID).
+#
+# Один и тот же файл работает в двух местах:
+#   * в монорепозитории исходники лежат в ios/  -> скрипт заходит в ios/;
+#   * в публичном зеркале kursy-valut-ios исходники в корне -> скрипт остаётся в корне.
+# Поэтому путь до каталога с project.yml определяется на лету.
 
 on:
   workflow_dispatch:
@@ -27,14 +32,29 @@ jobs:
       - name: Исходники
         uses: actions/checkout@v5
 
+      - name: Найти каталог iOS
+        id: ios
+        run: |
+          if [ -d "ios/project.yml" ]; then
+            echo "dir=ios" >> "$GITHUB_OUTPUT"
+            echo "artifact=ios/RatesApp-unsigned.ipa" >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=." >> "$GITHUB_OUTPUT"
+            echo "artifact=RatesApp-unsigned.ipa" >> "$GITHUB_OUTPUT"
+          fi
+          echo "каталог исходников: ${{ steps.ios.outputs.dir }}"
+
       - name: XcodeGen
         run: |
+          set -e
+          cd "${{ steps.ios.outputs.dir }}"
           brew install xcodegen
           xcodegen generate --spec project.yml
 
       - name: Сборка
         run: |
           set -o pipefail
+          cd "${{ steps.ios.outputs.dir }}"
           # имя схемы берём из проекта: так сборка не сломается из-за переименования
           SCHEME=$(xcodebuild -project RatesApp.xcodeproj -list \
                    | sed -n '/Schemes:/,$p' \
@@ -56,6 +76,7 @@ jobs:
       - name: Упаковка в .ipa
         run: |
           set -e
+          cd "${{ steps.ios.outputs.dir }}"
           APP="build/Build/Products/Release-iphoneos/RatesApp.app"
           test -d "$APP"
           mkdir -p Payload
@@ -69,13 +90,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: RatesApp-unsigned-ipa
-          path: RatesApp-unsigned.ipa
+          path: ${{ steps.ios.outputs.artifact }}
 
       - name: Релиз
         if: startsWith(github.ref, 'refs/tags/ios-v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          cd "${{ steps.ios.outputs.dir }}"
           gh release create "${GITHUB_REF_NAME}" RatesApp-unsigned.ipa \
             --title "Курсы валют для iPhone ${GITHUB_REF_NAME#ios-v}" \
             --notes "Неподписанная сборка для Sideloadly: скачайте .ipa и поставьте через Sideloadly на iPhone. Подпись Apple ID живёт 7 дней, потом нужно переподписать." || true
