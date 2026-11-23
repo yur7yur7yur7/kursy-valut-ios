@@ -275,16 +275,20 @@ enum RatesRepository {
         }
         do {
             let json = try await HTTP.get(HTTP.nbrbURL, timeout: 5)
-            var table = OfficialRates.parseNbrb(json)
-            if table.ok {
+            let nbrb = OfficialRates.parseNbrb(json)
+            if nbrb.ok {
+                var table = RatesParser.MyfinTable()
+                table.rates = nbrb.rates
+                table.date = nbrb.date
+                table.ok = true
                 table.origin = "НБ РБ"
-                return Fetched(value: table, error: myfin.error)
+                return Fetched<RatesParser.MyfinTable>(value: table, error: myfin.error)
             }
         } catch {
             var message = myfin.error ?? ""
             if !message.isEmpty { message += "  ·  " }
             message += "НБ РБ (nbrb.by): \(error.localizedDescription)"
-            return Fetched(value: myfin.value, error: message)
+            return Fetched<RatesParser.MyfinTable>(value: myfin.value, error: message)
         }
         return myfin
     }
@@ -305,13 +309,13 @@ enum RatesRepository {
                 table.date = cbr.date
                 table.ok = true
                 table.origin = "ЦБ РФ"
-                return Fetched(value: table, error: myfin.error)
+                return Fetched<RatesParser.MyfinTable>(value: table, error: myfin.error)
             }
         } catch {
             var message = myfin.error ?? ""
             if !message.isEmpty { message += "  ·  " }
             message += "ЦБ РФ (cbr.ru): \(error.localizedDescription)"
-            return Fetched(value: myfin.value, error: message)
+            return Fetched<RatesParser.MyfinTable>(value: myfin.value, error: message)
         }
         return myfin
     }
