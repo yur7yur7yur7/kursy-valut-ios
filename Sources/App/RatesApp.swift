@@ -79,7 +79,7 @@ struct RootView: View {
                 content
                     .padding(.top, 14)
 
-                Text("Источники: мини-ответ «конвертер валют» Яндекса и myfin.by (НБ РБ, ЦБ РФ). Данные носят справочный характер.")
+                Text("Источники: мини-ответ «конвертер валют» Яндекса, myfin.by и сайты регуляторов (НБ РБ, ЦБ РФ). Данные носят справочный характер.")
                     .font(.system(size: 12))
                     .foregroundColor(Theme.subtitle)
                     .padding(.top, 18)

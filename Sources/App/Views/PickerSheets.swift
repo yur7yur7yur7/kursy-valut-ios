@@ -38,6 +38,7 @@ struct BankPickerSheet: View {
 /// Отделения банка, отсортированные по лучшему курсу.
 struct OfficePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     let bank: BankCatalog.Bank
     let offices: [BankData.Office]
     let onPick: (BankData.Office) -> Void
@@ -46,20 +47,30 @@ struct OfficePickerSheet: View {
     var body: some View {
         NavigationView {
             List(shown, id: \.id) { office in
-                Button(action: { onPick(office); dismiss() }) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(office.address)
-                            .font(.system(size: 15))
-                            .foregroundColor(Theme.primaryText)
-                        HStack(spacing: 10) {
-                            Byn.text("Банк покупает 1 $ за \(Fmt.exact(office.usdSell, 4)) \(Byn.sign)",
-                                     size: 13)
-                                .foregroundColor(Theme.good)
-                            if !office.type.isEmpty {
-                                Text(office.type)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Theme.subtitle)
+                HStack(spacing: 12) {
+                    Button(action: { onPick(office); dismiss() }) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(office.address)
+                                .font(.system(size: 15))
+                                .foregroundColor(Theme.primaryText)
+                            HStack(spacing: 10) {
+                                Byn.text("Банк покупает 1 $ за \(Fmt.exact(office.usdSell, 4)) \(Byn.sign)",
+                                         size: 13)
+                                    .foregroundColor(Theme.good)
+                                if !office.type.isEmpty {
+                                    Text(office.type)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Theme.subtitle)
+                                }
                             }
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    // кнопка «В картах» у каждого отделения
+                    if let url = AppState.mapsURL(for: office) {
+                        ActionPill(title: "В картах", tint: Theme.text) {
+                            openURL(url)
                         }
                     }
                 }

@@ -41,6 +41,21 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Нужно, чтобы показать ближайшие обменники и расстояние до них. Координаты не покидают телефон.</string>
+	<!-- Обычный HTTP разрешён только для cbr.ru: там публичный XML с курсами ЦБ РФ,
+	     а сертификат сайта нестандартный. Остальные источники работают по HTTPS. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>www.cbr.ru</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIAppFonts</key>

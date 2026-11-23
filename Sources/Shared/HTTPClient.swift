@@ -12,9 +12,19 @@ enum HTTP {
     static let myfinCbrURL = "https://myfin.by/currency/cb-rf"
     /// Единый снимок курсов всех банков — одна страница вместо страницы на банк.
     static let onlinerURL = "https://kurs.onliner.by/"
+    /// Запасные официальные источники: myfin.by отвечает «HTTP 423».
+    /// cbr.ru отдаёт XML по обычному HTTP — сертификат у него нестандартный.
+    static let nbrbURL = "https://www.nbrb.by/StatExchangeRates/LastDayRate?CURRENCY=840"
+    static let cbrURL = "http://www.cbr.ru/scripts/XML_daily.asp"
 
     /// Сколько можно не запрашивать официальные курсы заново (они меняются раз в сутки).
     static let officialTTL: TimeInterval = 5 * 60
+    /// Страница Яндекса тяжёлая (около 600 КБ) — читаем её дольше.
+    static let yandexTimeout: TimeInterval = 45
+    /// Запасные источники отвечают быстро, долго ждать не надо.
+    static let officialTimeout: TimeInterval = 15
+    /// Сколько раз пробуем скачать страницу Яндекса, прежде чем сдаться.
+    static let yandexAttempts = 2
 
     enum LoadError: Error {
         case badURL
@@ -22,7 +32,11 @@ enum HTTP {
     }
 
     /// Скачивает страницу и возвращает её текст.
-    static func get(_ urlString: String, timeout: TimeInterval = 25) async throws -> String {
+    ///
+    /// - Parameter encoding: кодировка ответа (у ЦБ РФ — windows-1251).
+    static func get(_ urlString: String,
+                    timeout: TimeInterval = 25,
+                    encoding: String.Encoding = .utf8) async throws -> String {
         guard let url = URL(string: urlString) else { throw LoadError.badURL }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -38,7 +52,8 @@ enum HTTP {
         guard let http = response as? HTTPURLResponse, (200..<400).contains(http.statusCode) else {
             throw LoadError.badResponse
         }
-        return String(data: data, encoding: .utf8)
+        return String(data: data, encoding: encoding)
+            ?? String(data: data, encoding: .utf8)
             ?? String(data: data, encoding: .isoLatin1)
             ?? ""
     }

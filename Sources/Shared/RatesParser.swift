@@ -17,6 +17,8 @@ enum RatesParser {
         var rates: [String: Double] = [:]
         var date: String = ""
         var ok: Bool = false
+        /// Откуда взяты данные: «myfin.by», «НБ РБ», «ЦБ РФ».
+        var origin: String = ""
     }
 
     private static let ruMonths = ["января", "февраля", "марта", "апреля", "мая", "июня",

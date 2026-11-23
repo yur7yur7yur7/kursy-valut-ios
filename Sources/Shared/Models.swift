@@ -16,9 +16,33 @@ struct Rates: Codable {
     }
 
     var fetchedAt: Double = 0
+    /// Когда официальные курсы удалось обновить в последний раз.
+    var officialFetchedAt: Double = 0
+    /// Последняя попытка обновить официальные курсы не удалась — данные старые.
+    var officialStale: Bool = false
+    /// Подпись блока официальных курсов: myfin.by или сайты регуляторов.
+    var officialTitle: String = "myfin.by"
+    /// Подсказка под названием: какие источники внутри.
+    var officialSubtitle: String = "НБ РБ · ЦБ РФ"
     var yandexOk: Bool = false
     var myfinOk: Bool = false
     var rows: [Row] = []
+
+    init() {}
+
+    /// Старые снимки не знают про новые поля — читаем их как обычно.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        fetchedAt = try container.decodeIfPresent(Double.self, forKey: .fetchedAt) ?? 0
+        officialFetchedAt = try container.decodeIfPresent(Double.self, forKey: .officialFetchedAt) ?? 0
+        officialStale = try container.decodeIfPresent(Bool.self, forKey: .officialStale) ?? false
+        officialTitle = try container.decodeIfPresent(String.self, forKey: .officialTitle) ?? "myfin.by"
+        officialSubtitle = try container.decodeIfPresent(String.self, forKey: .officialSubtitle)
+            ?? "НБ РБ · ЦБ РФ"
+        yandexOk = try container.decodeIfPresent(Bool.self, forKey: .yandexOk) ?? false
+        myfinOk = try container.decodeIfPresent(Bool.self, forKey: .myfinOk) ?? false
+        rows = try container.decodeIfPresent([Row].self, forKey: .rows) ?? []
+    }
 
     /// Курс «1 from = ? to» у конкретного источника; если пары нет — обратный.
     func providerRate(_ provider: String, _ from: String, _ to: String) -> Double? {

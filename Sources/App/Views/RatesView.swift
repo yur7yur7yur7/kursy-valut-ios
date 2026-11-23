@@ -109,8 +109,8 @@ struct RatesView: View {
                            icon: "🔍",
                            state: state)
             ConverterBlock(provider: Rates.providerMyfin,
-                           title: "myfin.by",
-                           subtitle: "НБ РБ · ЦБ РФ",
+                           title: state.rates.officialTitle,
+                           subtitle: state.rates.officialSubtitle,
                            icon: "💳",
                            state: state)
         }
